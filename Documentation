@@ -1,0 +1,263 @@
+Assignment 4 COL226
+By: Sagar Sharma 2018CS10378
+
+Documentaion of Backend functions (bmoudle.ml)
+----------------------------------------------------------------------
+NOTE: My implementation consists of sheet as value array array. Where value is a type that consists of floats, integers and Empty cells.
+      My implement is column major. Sheet is composed of array of columns which are array of values.
+      I used arrays for they are mutable but all my function are recursive and can be proved for correctness by induction.
+      
+----------------------------------------------------------------------
+-------------------------------PRINTSHEET-----------------------------
+printsheet (s:sheet) (itr:int) : sheet 
+------> In this function I use itr as row number that we have to print and call printrow function.
+printrow (s:sheet) (row:int) (itr:int): unit 
+------> This function travers over all columns recursively and prints out the value belonging to a given "row"
+        As I my implementation is based on columns, I call printrow function that
+        traverses over columns to print that cell that belongs to given row.
+
+----------------------------------------------------------------------
+------------------------------EXPAND SHEET----------------------------
+
+let rec makesheet (s:sheet) (l:column) (itr:int) (size:int) : sheet
+
+let rec makeEmptySheet (x:int) (y:int) : sheet
+
+let rec expandSheet (s:sheet) (x:int) (y:int) :sheet
+
+Now this one required some thinking because of woring of Array module. make inbuilt function does create an array filled with element x but
+if x is itself mutable then changes to one column will change all the columns. So I created Array of empty arrays of size same as no of columns 
+given. Then I worked on what kind of expansion is required on the basis of x and y. Once decided I call make empty sheet in each case. 
+In makeEmptySheet after creating an array with empty array. I also created a column filled with E (EmptyCell) and passed both to makesheet function.
+I make sheet we create a copy of l using copy inbuilt function of the module, thus dealing with mutability problem. After this function we have created a sheet 
+of size x*y filled with E.
+
+After making an empty sheet of expanded size, we now fill value of earlier sheet into the new sheet. 
+
+let rec fill_sheet (s:sheet) (ans:sheet) (itr:int) : sheet =
+------> Using itr as iterator we call fill_col on every column indexed by itr. I have passed both previous sheet and new sheet as arguments
+
+let rec fill_col (col:column) (ans:sheet) (c:int) (itr:int) =
+------> While itr is less than size of column we fill the value on the index given by itr into the ans sheet. Then we recursively call the function again with
+        updated iterator value. At the end we return a unit.
+
+----------------------------------------------------------------------
+---------------------------------COUNT--------------------------------
+full_count: sheet -> range -> index -> sheet : Fills count of valid entries in the given range into the specified cell
+------> to implement this function I first checked if the inputs given are out of bound, if not then I call
+        my_full_count function
+
+my_full_count (s:sheet) (r:range) (i:index) (n:int) (ans:int): sheet
+------> In this function I use "n" as an iterator. I keep on recursively calling the function while updating the iterator
+        value until it lies in the range given. Then for each column indexed by "n" I call my_col function and add the result to "ans"
+        recall the function my_full_count again with updated "ans" and "n"
+
+my_col  (col:column) (a:int) (c:int) (itr:int) (ans:int)
+------> Counts the number of valid entries in a column by match each value of column and the recursively calling again with updated "ans"
+        finally it returns the "ans" when the iterator "itr" has reached end of the given row range.
+
+----------------------------------------------------------------------
+---------------------------------ROWCOUNT-----------------------------
+
+row_count: sheet -> range -> index -> sheet : Fills count of valid entries per row in the given range into the column starting from the specified cell
+------> First we check for out of bounds input. Then we call "expandsheet" which handles all the cases if we even need to expand the sheet. We send the expanded sheet 
+        as argument to my_row_count function. 
+
+my_row_count (s:sheet) (r:range) (i:index) (itr:int) :sheet = 
+------> We keep on recursively calling the function until itr comes into given range. Then once in range we call rowc function while will work on row given be itr.
+        Then we call the function again. In the end we call printsheet to show the resulting sheet.
+
+let rec rowc (s:sheet) (b:int) (d:int) (row:int) (itr:int) (ans:int) (x:int) (y:int) : int =
+------> With the given row we traverse over the columns using itr as iterator. Once in range, we match the value at s.(itr).(col) to check if it is valid
+        we call the function again with the updated ans. At the end we update the value of relevent cell and return ans.
+
+----------------------------------------------------------------------
+---------------------------------COLCOUNT-----------------------------
+col_count: sheet -> range -> index -> sheet : Fills count of valid entries per column in the given range into the row starting from the specified cell.
+------> First we check for out of bounds input. Then we call "expandsheet" which handles all the cases if we even need to expand the sheet. We send the expanded sheet 
+        as argument to my_col_count function. 
+
+my_col_count (s:sheet) (r:range) (i:index) (itr:int) :sheet =
+------> We keep on recursively calling the function until itr comes into given range. Then once in range we call colc function while will work on row given be itr.
+        Then we call the function again. In the end we call printsheet to show the resulting sheet.
+
+colc (s:sheet) (b:int) (d:int) (row:int) (itr:int) (ans:int) (x:int) (y:int) : int =
+------> With the given col we traverse over the rows using itr as iterator. Once in range, we match the value at s.(col).(itr) to check if it is valid
+        we call the function again with the updated ans. At the end we update the value of relevent cell and return ans.
+
+
+----------------------------------------------------------------------
+----------------------------------SUM---------------------------------
+
+full_sum: sheet -> range -> index -> sheet : Fills the sum of entries of cells in the given range into the specified cell
+------> to implement this function I first checked if the inputs given are out of bound, if not then I call
+        my_full_sum function
+
+my_full_sum (s:sheet) (r:range) (i:index) (n:int) (ans:float): sheet = 
+------> In this function I use "n" as an iterator. I keep on recursively calling the function while updating the iterator
+        value until it lies in the range given. Then for each column indexed by "n" I call my_col function and add the result to "ans"
+        recall the function my_full_sum again with updated "ans" and "n"
+
+my_colsum (col:column) (a:int) (c:int) (itr:int) (ans:float):float = 
+------> Once itr is in range we match the values at col.(itr) and add the float to ans.
+        In the end return ans.
+
+---------------------------------------------------------------------
+----------------------------------ROWSUM------------------------------
+
+row_sum: sheet -> range -> index -> sheet : Fills the sum of entries of cells per row in the given range into the column starting from the specified cell
+------> First we check for out of bounds input. Then we call "expandsheet" which handles all the cases if we even need to expand the sheet. We send the expanded sheet 
+        as argument to my_row_sum function. 
+
+my_row_sum (s:sheet) (r:range) (i:index) (itr:int) :sheet = 
+------> We keep on recursively calling the function until itr comes into given range. Then once in range we call rows function while will work on row given be itr.
+        Then we call the function again. In the end we call printsheet to show the resulting sheet.
+
+let rec rowc (s:sheet) (b:int) (d:int) (row:int) (itr:int) (ans:int) (x:int) (y:int) : int =
+------> With the given row we traverse over the columns using itr as iterator. Once in range, we match the value at s.(itr).(row) and it to the ans if it is valid.
+        we call the function again with the updated ans. At the end we update the value of relevent cell and return ans.
+
+----------------------------------------------------------------------
+-----------------------------------COLSUM-----------------------------
+
+col_sum: sheet -> range -> index -> sheet : Fills the sum of entries of cells per column in the given range into the row starting from the specified cell
+------> First we check for out of bounds input. Then we call "expandsheet" which handles all the cases if we even need to expand the sheet. We send the expanded sheet 
+        as argument to my_col_sum function. 
+
+my_col_sum (s:sheet) (r:range) (i:index) (itr:int) :sheet =
+------> We keep on recursively calling the function until itr comes into given range. Then once in range we call cols function while will work on row given be itr.
+        Then we call the function again. In the end we call printsheet to show the resulting sheet.
+
+cols (s:sheet) (b:int) (d:int) (row:int) (itr:int) (ans:int) (x:int) (y:int) : int =
+------> With the given col we traverse over the rows using itr as iterator. Once in range, we match the value at s.(col).(itr) to check if it is valid
+        we call the function again with the updated ans. At the end we update the value of relevent cell and return ans.
+
+----------------------------------------------------------------------
+------------------------------------AVG-------------------------------
+
+full_avg: sheet -> range -> index -> sheet : Fills the avg of entries of cells in the given range into the specified cell
+------> to implement this function I first checked if the inputs given are out of bound, if not then I call
+        my_full_avg function. I kept a mutable array to also keep track of all the valid entries in the range.
+
+my_full_avg (s:sheet) (r:range) (i:index) (n:int) (ans:float) (mut:mutarr): sheet = 
+------> In this function I use "n" as an iterator. I keep on recursively calling the function while updating the iterator
+        value until it lies in the range given. Then for each column indexed by "n" I call my_colavg function and add the result to "ans"
+        recall the function my_full_avg again with updated "ans" and "n" and mutarr
+
+my_colavg (col:column) (a:int) (c:int) (itr:int) (ans:float) (mut:mutarr):float =
+------> Once itr is in range we match the values at col.(itr) and add the float to ans.
+        In the end return ans. We also keep track of valid entries.
+
+----------------------------------------------------------------------
+-----------------------------------ROWAVG-----------------------------
+
+row_avg (s:sheet) (r:range) (i:index): sheet = 
+------> First we check for out of bounds input. Then we call "expandsheet" which handles all the cases if we even need to expand the sheet. We send the expanded sheet 
+        as argument to my_row_avg function. 
+
+my_row_avg (s:sheet) (r:range) (i:index) (itr:int) :sheet =
+------> We keep on recursively calling the function until itr comes into given range. Then once in range we call cols function while will work on row given be itr.
+        Then we call the function again. In the end we call printsheet to show the resulting sheet.
+
+
+rowa (s:sheet) (b:int) (d:int) (row:int) (itr:int) (ans:float) (x:i------> We keep on recursively calling the function until itr comes into given range. Then once in range we call cols function while will work on row given be itr.
+------> With the given row we traverse over the columns using itr as iterator. Once in range, we match the value at s.(itr).(row) and add it to the ans if it is valid.
+        we call the function again with the updated ans. At the end we take average and update the value of relevent cell and return ans.
+
+ ----------------------------------------------------------------------
+-----------------------------------COLAVG-----------------------------
+
+col_avg: sheet -> range -> index -> sheet : Fills the avg of entries of cells per column in the given range into the row starting from the specified cell
+------> First we check for out of bounds input. Then we call "expandsheet" which handles all the cases if we even need to expand the sheet. We send the expanded sheet 
+        as argument to my_col_avg function. 
+
+my_col_avg (s:sheet) (r:range) (i:index) (itr:int) :sheet =
+------> We keep on recursively calling the function until itr comes into given range. Then once in range we call cols function while will work on row given be itr.
+        Then we call the function again. In the end we call printsheet to show the resulting sheet.
+
+cola (s:sheet) (a:int) (c:int) (col:int) (itr:int) (ans:float) (x:int) (y:int) (ent:int) : float =
+------> With the given col we traverse over the rows using itr as iterator. Once in range, we match the value at s.(col).(itr) to check if it is valid
+        we call the function again with the updated ans. At the end we update the value of relevent cell and return ans.
+
+----------------------------------------------------------------------
+------------------------------------MIN-------------------------------
+
+full_min (s:sheet) (r:range) (i:index): sheet = 
+------> to implement this function I first checked if the inputs given are out of bound, if not then I call
+        my_full_count function
+
+my_full_min (s:sheet) (r:range) (i:index) (n:int) (ans:float): sheet
+------> In this function I use "n" as an iterator. I keep on recursively calling the function while updating the iterator
+        value until it lies in the range given. Then for each column indexed by "n" I call my_col function and then compare the result with
+        current ans, then update the ans if needed. Recall the function my_full_count again with updated "ans" and "n"
+
+my_colmin (col:column) (a:int) (c:int) (itr:int) (ans:float):float = 
+------> Find the min of the column using itr as iterator and then return the answer.
+
+----------------------------------------------------------------------
+-----------------------------------ROWMIN-----------------------------
+
+row_min: (s:sheet) (r:range) (i:index): sheet = Fills count of valid entries per row in the given range into the column starting from the specified cell
+------> First we check for out of bounds input. Then we call "expandsheet" which handles all the cases if we even need to expand the sheet. We send the expanded sheet 
+        as argument to my_row_count function. 
+
+my_row_min (s:sheet) (r:range) (i:index) (itr:int) :sheet = 
+------> We keep on recursively calling the function until itr comes into given range. Then once in range we call rowc function while will work on row given be itr.
+        Then we call the function again. In the end we call printsheet to show the resulting sheet.
+
+rowm (s:sheet) (b:int) (d:int) (row:int) (itr:int) (ans:float) (x:int) (y:int) =
+------> With the given row we traverse over the columns using itr as iterator. Once in range, we match the value at s.(itr).(col) to check if it is valid
+        we call the function again with the updated ans which is minimum of the row until now. At the end we update the value of relevent cell and return ans.
+
+----------------------------------------------------------------------
+-----------------------------------COLMIN-----------------------------
+col_min (s:sheet) (r:range) (i:index): sheet =
+------> First we check for out of bounds input. Then we call "expandsheet" which handles all the cases if we even need to expand the sheet. We send the expanded sheet 
+        as argument to my_col_count function. 
+
+my_col_min my_col_min (s:sheet) (r:range) (i:index) (itr:int) :sheet =
+------> We keep on recursively calling the function until itr comes into given range. Then once in range we call colc function while will work on row given be itr.
+        Then we call the function again. In the end we call printsheet to show the resulting sheet.
+
+colm (s:sheet) (a:int) (c:int) (col:int) (itr:int) (ans:float) (x:int) (y:int) : float =
+------> With the given col we traverse over the rows using itr as iterator. Once in range, we match the value at s.(col).(itr) to check if it is valid
+        we call the function again with the updated ans which is min uptil now. At the end we update the value of relevent cell and return ans.
+
+----------------------------------------------------------------------
+------------------------------- MAX FUNCTIONS ------------------------
+
+It is same as min except the comparison is reversed.
+
+----------------------------------------------------------------------
+------------------------------- CONST FUNCTIONS ------------------------
+
+coladd (s:sheet) (a:int) (c:int) (col:int) (itr:int) (f:float) (r:range) (i:index): float =
+	Here once itr is in range, we match the value at s.(col).(itr) and add to it the float given and update the value.
+    We leave the empty cell be.
+
+my_add_const (s:sheet) (r:range) (i:index) (itr:int) (f:float):sheet =
+	Once itr is in range, we call coladd on each column and at the end printsheet.
+
+add_const (s:sheet) (r:range)  (f:float) (i:index) : sheet =
+	After checking for unbounded inputs we call expandSheet and pass the new sheet as argument to my_add_const.
+
+All const functions are like this.
+
+----------------------------------------------------------------------
+------------------------------- RANGE FUNCTIONS ------------------------
+
+let rec colRangeAdd (s:sheet) (a:int) (c:int) (col:int) (itr:int) (ro:range) (i:index) (r1:range) (r2:range) =
+	itr is already in range as initialized 0. Now just keep on adding relevent cells together and write it in relevent cell.
+
+my_add_range (s:sheet) (r1:range) (r2:range) (i:index) (itr:int) (ro : range) : sheet =
+	Once itr is in range call the colRange add function. Note that I have sent ro as range which is ([0,0]:[width,length]). 
+    We can add some constants to this range to get relevent cells from where we to read and write.
+
+checkCompatible (r1:range) (r2:range) : bool = 
+	checks if the two ranges are compatible that is have same length and width.
+
+add_range (s:sheet) (r1:range) (r2:range) (i:index) : sheet = 
+	First check the two ranges are compatible. Then check for out of bounds inputs. Then call expandSheet and send the new sheet
+    as argument to my_add_range function.
+
+all range functions are like this with differnet binary operation.
